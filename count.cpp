@@ -202,23 +202,41 @@ double ouralg(int*& dnf, long*& dnf_ind, int*& dnfMax, int& maxvar, int*& A, mpf
     return 1.0*Y/count;
 }
 
-int main() {
+// usage: count [file.dnf [eps [delta [seed]]]]
+// defaults: test.dnf, eps=delta=0.05, nondeterministic seed
+int main(int argc, char** argv) {
     int exp = 0;
     int nvars = 4;
-    double eps = .05;
-    double delta = .05;
+    string filename = argc > 1 ? argv[1] : "test.dnf";
+    double eps = argc > 2 ? atof(argv[2]) : .05;
+    double delta = argc > 3 ? atof(argv[3]) : .05;
+
+    if (!(eps > 0 && eps < 1 && delta > 0 && delta < 1)) {
+        cerr << "eps and delta must be in (0,1)" << endl;
+        return 2;
+    }
+    if (!ifstream(filename)) {
+        cerr << "cannot open " << filename << endl;
+        return 2;
+    }
 
     mpf_set_default_prec(128);
 
     bit_array_read<gmt::byte,int> bitRead;
     bit_array_write<gmt::byte,int> bitWrite;
 
-    srand(time(0));
     random_device rd;
-    mt19937 gen(rd());
-    mt19937_64 gen64(rd());
+    unsigned long seed = argc > 4 ? strtoul(argv[4], 0, 10) : 0;
+    if (argc > 4) {
+        srand(seed);
+        srand48(seed);
+    } else {
+        srand(time(0));
+    }
+    mt19937 gen(argc > 4 ? seed : rd());
+    mt19937_64 gen64(argc > 4 ? seed + 1 : rd());
 
-    tuple<int**, int, int, unsigned long> DNFINFO = readDNF("test.dnf");
+    tuple<int**, int, int, unsigned long> DNFINFO = readDNF(filename);
 
     int** DNF = get<0>(DNFINFO);
     int n = get<1>(DNFINFO);

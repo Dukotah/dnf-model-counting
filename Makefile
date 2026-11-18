@@ -32,7 +32,12 @@ test: count
 	        print "PASS" \
 	    }'
 
-clean:
-	rm -f count
+bench: count bench/exact
 
-.PHONY: all test clean
+bench/exact: bench/exact.cpp
+	$(CXX) $(CXXFLAGS) -o $@ $<
+
+clean:
+	rm -f count bench/exact
+
+.PHONY: all test bench clean
